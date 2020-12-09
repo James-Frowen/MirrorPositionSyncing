@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Mirror
+namespace Mirror.PositionSyncing
 {
     public class NetworkTransformSystem : MonoBehaviour
     {
@@ -15,6 +15,17 @@ namespace Mirror
 
         [Header("Position Compression")]
         [SerializeField] bool compressPosition = true;
+
+        internal void AddBehaviour(NetworkTransformBehaviour networkTransformPositionOnlyBehaviour)
+        {
+            throw new NotImplementedException();
+        }
+
+        internal void RemoveBehaviour(NetworkTransformBehaviour networkTransformPositionOnlyBehaviour)
+        {
+            throw new NotImplementedException();
+        }
+
         [SerializeField] Vector3 min = Vector3.one * -100;
         [SerializeField] Vector3 max = Vector3.one * -100;
         [SerializeField] float precision = 0.01f;
@@ -24,9 +35,9 @@ namespace Mirror
         [SerializeField] private bool drawGizmo;
         [SerializeField] private Color gizmoColor;
         [Tooltip("readonly")]
-        [SerializeField] private int bitCount;
+        [SerializeField] private int _bitCount;
         [Tooltip("readonly")]
-        [SerializeField] private int byteCount;
+        [SerializeField] private int _byteCount;
 
         [NonSerialized]
         public PositionCompression compression;
@@ -34,8 +45,8 @@ namespace Mirror
         private void OnValidate()
         {
             compression = new PositionCompression(min, max, precision);
-            bitCount = compression.bitCount;
-            byteCount = Mathf.CeilToInt(bitCount);
+            _bitCount = compression.bitCount;
+            _byteCount = Mathf.CeilToInt(_bitCount);
         }
         private void Awake()
         {

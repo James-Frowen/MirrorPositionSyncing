@@ -1,9 +1,9 @@
 using System.Runtime.CompilerServices;
 using UnityEngine;
 
-namespace Mirror
+namespace Mirror.PositionSyncing
 {
-    public class NetworkTransformPositionOnlyBehaviour : NetworkBehaviour
+    public class NetworkTransformBehaviour : NetworkBehaviour
     {
         public Transform target;
 
@@ -12,6 +12,16 @@ namespace Mirror
             if (target == null)
                 target = transform;
         }
+
+        private void OnEnable()
+        {
+            NetworkTransformSystem.Instance.AddBehaviour(this);
+        }
+        private void OnDisable()
+        {
+            NetworkTransformSystem.Instance.RemoveBehaviour(this);
+        }
+
 
         [Header("Authority")]
         [Tooltip("Set to true if moves come from owner client, set to false if moves always come from server")]

@@ -2,7 +2,7 @@ using System;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 
-namespace Mirror
+namespace Mirror.PositionSyncing
 {
     public class PositionCompression
     {
