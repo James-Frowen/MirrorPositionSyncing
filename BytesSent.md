@@ -8,6 +8,7 @@ Comparing how many bytes are sent and write count for different methods
 840  KB     NetworkTransform (Position only)
 540  KB     Positions System (uncompressed)
 260  KB     Positions System (compressed)
+380  KB     Positions+rotation System (compressed)
 ```
 
 
@@ -102,4 +103,23 @@ around to 1300 for simplicity
 per update 
 200 writes
 260000 bytes
+```
+
+## 200 positions+rotation System (compressed)
+```
+MessageHash     2 bytes
+Count           2 bytes
+
+foreach position
+    NetId(packed)  1 or 2 bytes
+    Position       39 bits = 5 bytes
+    rotation       23 bits = 3 bytes
+
+total message size 
+between 1804->2004
+around to 1900 for simplicity
+
+per update 
+200 writes
+380000 bytes
 ```
