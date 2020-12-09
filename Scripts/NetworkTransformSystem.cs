@@ -53,7 +53,7 @@ namespace Mirror.PositionSyncing
         {
             compression = new PositionCompression(min, max, precision);
             _bitCount = compression.bitCount;
-            _byteCount = Mathf.CeilToInt(_bitCount / 8);
+            _byteCount = Mathf.CeilToInt(_bitCount / 8f);
         }
         private void Awake()
         {
@@ -118,6 +118,7 @@ namespace Mirror.PositionSyncing
             {
                 foreach (KeyValuePair<uint, IHasPosition> kvp in behaviours)
                 {
+                    // todo add dirty check
                     uint id = kvp.Key;
                     Vector3 position = kvp.Value.Position;
 
