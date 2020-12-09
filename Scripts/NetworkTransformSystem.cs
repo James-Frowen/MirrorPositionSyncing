@@ -13,9 +13,6 @@ namespace Mirror.PositionSyncing
 
         readonly Dictionary<uint, IHasPosition> behaviours = new Dictionary<uint, IHasPosition>();
 
-        [Header("Position Compression")]
-        [SerializeField] bool compressPosition = true;
-
 
         internal void AddBehaviour(IHasPosition behaviour)
         {
@@ -27,6 +24,12 @@ namespace Mirror.PositionSyncing
             behaviours.Remove(behaviour.Id);
         }
 
+
+        [Header("Sync")]
+        public float syncInterval = 0.1f;
+
+        [Header("Position Compression")]
+        [SerializeField] bool compressPosition = true;
         [SerializeField] Vector3 min = Vector3.one * -100;
         [SerializeField] Vector3 max = Vector3.one * -100;
         [SerializeField] float precision = 0.01f;
@@ -42,6 +45,9 @@ namespace Mirror.PositionSyncing
 
         [NonSerialized]
         public PositionCompression compression;
+
+        [NonSerialized]
+        float nextSyncInterval;
 
         private void OnValidate()
         {
@@ -97,6 +103,14 @@ namespace Mirror.PositionSyncing
 
         //}
 
+        private void LateUpdate()
+        {
+            float now = Time.time;
+            if (now > nextSyncInterval)
+            {
+                SendUpdateToAll();
+            }
+        }
         void SendUpdateToAll()
         {
             NetworkPositionMessage msg;
