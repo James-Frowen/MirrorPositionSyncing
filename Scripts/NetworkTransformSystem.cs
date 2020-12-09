@@ -53,7 +53,7 @@ namespace Mirror.PositionSyncing
         {
             compression = new PositionCompression(min, max, precision);
             _bitCount = compression.bitCount;
-            _byteCount = Mathf.CeilToInt(_bitCount);
+            _byteCount = Mathf.CeilToInt(_bitCount / 8);
         }
         private void Awake()
         {
