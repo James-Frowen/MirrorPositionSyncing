@@ -8,6 +8,9 @@ namespace Mirror.PositionSyncing
         Vector3 IHasPosition.Position => target.position;
         uint IHasPosition.Id => netId;
 
+        void IHasPosition.SetPositionClient(Vector3 position) => DeserializeFromReader(position);
+        void IHasPosition.SetPositionServer(Vector3 position) => target.localPosition = position;
+
         public Transform target;
 
         private void OnValidate()
@@ -86,12 +89,12 @@ namespace Mirror.PositionSyncing
         // local authority send time
         float lastClientSendTime;
 
-        public override bool OnSerialize(NetworkWriter writer, bool initialState)
-        {
-            // no syncvars because no base called
-            writer.WriteVector3(target.localPosition);
-            return true;
-        }
+        //public override bool OnSerialize(NetworkWriter writer, bool initialState)
+        //{
+        //    // no syncvars because no base called
+        //    writer.WriteVector3(target.localPosition);
+        //    return true;
+        //}
 
         // try to estimate movement speed for a data point based on how far it
         // moved since the previous one
@@ -189,32 +192,6 @@ namespace Mirror.PositionSyncing
             goal = temp;
         }
 
-        public override void OnDeserialize(NetworkReader reader, bool initialState)
-        {
-            Vector3 pos = reader.ReadVector3();
-            // deserialize
-            DeserializeFromReader(pos);
-        }
-
-        // local authority client sends sync message to server for broadcasting
-        [Command]
-        void CmdClientToServerSync(Vector3 position)
-        {
-            // Ignore messages from client if not in client authority mode
-            if (!clientAuthority)
-                return;
-
-            DeserializeFromReader(position);
-
-            // server-only mode does no interpolation to save computations,
-            // but let's set the position directly
-            if (isServer && !isClient)
-                ApplyPositionRotationScale(goal.localPosition);
-
-            // set dirty so that OnSerialize broadcasts it
-            SetDirtyBit(1UL);
-        }
-
         static Vector3 InterpolatePosition(DataPoint start, DataPoint goal, Vector3 currentPosition)
         {
             if (start.isValid)
@@ -274,7 +251,7 @@ namespace Mirror.PositionSyncing
         }
 
         // set position carefully depending on the target component
-        void ApplyPositionRotationScale(Vector3 position)
+        void ApplyPosition(Vector3 position)
         {
             // local position/rotation for VR support
             target.localPosition = position;
@@ -282,23 +259,9 @@ namespace Mirror.PositionSyncing
 
         void Update()
         {
-            if (isServer)
-            {
-                ServerUpdate();
-            }
-
-            // no 'else if' since host mode would be both
             if (isClient)
             {
                 ClientUpdate();
-            }
-        }
-        private void ServerUpdate()
-        {
-            // if not dirty, then check HasMoved and set dirty bit
-            if (!HasDirtybit() && HasMoved())
-            {
-                SetDirtyBit(1UL);
             }
         }
 
@@ -313,7 +276,11 @@ namespace Mirror.PositionSyncing
                 {
                     if (HasMoved())
                     {
-                        CmdClientToServerSync(target.localPosition);
+                        connectionToServer.Send(new NetworkPositionSingleMessage
+                        {
+                            id = netId,
+                            position = target.position
+                        });
                     }
                     lastClientSendTime = Time.time;
                 }
@@ -331,7 +298,7 @@ namespace Mirror.PositionSyncing
                     if (NeedsTeleport())
                     {
                         // local position/rotation for VR support
-                        ApplyPositionRotationScale(goal.localPosition);
+                        ApplyPosition(goal.localPosition);
 
                         // reset data points so we don't keep interpolating
                         start = default;
@@ -340,7 +307,7 @@ namespace Mirror.PositionSyncing
                     else
                     {
                         // local position/rotation for VR support
-                        ApplyPositionRotationScale(InterpolatePosition(start, goal, target.localPosition));
+                        ApplyPosition(InterpolatePosition(start, goal, target.localPosition));
                     }
                 }
             }

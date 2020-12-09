@@ -137,7 +137,13 @@ namespace Mirror.PositionSyncing
         /// <param name="arg2"></param>
         private void ServerHandleNetworkPositionMessage(NetworkConnection conn, NetworkPositionSingleMessage msg)
         {
+            uint id = msg.id;
+            Vector3 position = msg.position;
 
+            if (behaviours.TryGetValue(id, out IHasPosition behaviour))
+            {
+                behaviour.SetPositionServer(position);
+            }
         }
 
 
@@ -156,13 +162,14 @@ namespace Mirror.PositionSyncing
 
                     if (behaviours.TryGetValue(id, out IHasPosition behaviour))
                     {
-                        behaviour.Position = position;
+                        behaviour.SetPositionClient(position);
                     }
                 }
                 Debug.Assert(i == count, "should have read exact amount");
             }
         }
 
+#if UNITY_EDITOR
         private void OnDrawGizmos()
         {
             if (!drawGizmo) { return; }
@@ -172,6 +179,7 @@ namespace Mirror.PositionSyncing
             bounds.max = new Vector3(500, 40, 500);
             Gizmos.DrawWireCube(bounds.center, bounds.size);
         }
+#endif
     }
 
     public interface IHasPosition
