@@ -31,7 +31,7 @@ namespace Mirror.PositionSyncing
         [Header("Position Compression")]
         [SerializeField] bool compressPosition = true;
         [SerializeField] Vector3 min = Vector3.one * -100;
-        [SerializeField] Vector3 max = Vector3.one * -100;
+        [SerializeField] Vector3 max = Vector3.one * 100;
         [SerializeField] float precision = 0.01f;
 
 
