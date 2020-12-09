@@ -88,6 +88,16 @@ per update
 ```
 
 ## 200 positions System (compressed)
+Compression
+```
+Ranges
+x 0-> 500
+x 0-> 60
+z 0-> 500
+
+precision = 0.05f
+```
+
 ```
 MessageHash     2 bytes
 Count           2 bytes
