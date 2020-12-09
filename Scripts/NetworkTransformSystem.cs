@@ -11,19 +11,20 @@ namespace Mirror.PositionSyncing
 
         //public int maxMessageSize = 1000;
 
-        Dictionary<uint, IHasPosition> behaviours;
+        readonly Dictionary<uint, IHasPosition> behaviours = new Dictionary<uint, IHasPosition>();
 
         [Header("Position Compression")]
         [SerializeField] bool compressPosition = true;
 
-        internal void AddBehaviour(NetworkTransformBehaviour networkTransformPositionOnlyBehaviour)
+
+        internal void AddBehaviour(IHasPosition behaviour)
         {
-            throw new NotImplementedException();
+            behaviours.Add(behaviour.Id, behaviour);
         }
 
-        internal void RemoveBehaviour(NetworkTransformBehaviour networkTransformPositionOnlyBehaviour)
+        internal void RemoveBehaviour(IHasPosition behaviour)
         {
-            throw new NotImplementedException();
+            behaviours.Remove(behaviour.Id);
         }
 
         [SerializeField] Vector3 min = Vector3.one * -100;
@@ -98,19 +99,24 @@ namespace Mirror.PositionSyncing
 
         void SendUpdateToAll()
         {
-            // message size = (1/2 + 12) * n + 4;
             NetworkPositionMessage msg;
             using (PooledNetworkWriter writer = NetworkWriterPool.GetWriter())
             {
                 foreach (KeyValuePair<uint, IHasPosition> kvp in behaviours)
                 {
                     uint id = kvp.Key;
-                    IHasPosition behaviour = kvp.Value;
-                    Vector3 position = behaviour.Position;
+                    Vector3 position = kvp.Value.Position;
 
                     writer.WritePackedUInt32(id);
-                    // todo compress
-                    writer.WriteVector3(position);
+
+                    if (compressPosition)
+                    {
+                        compression.Compress(writer, position);
+                    }
+                    else
+                    {
+                        writer.WriteVector3(position);
+                    }
                 }
 
                 msg = new NetworkPositionMessage
@@ -124,15 +130,37 @@ namespace Mirror.PositionSyncing
 
 
 
-        private void ServerHandleNetworkPositionMessage(NetworkConnection arg1, NetworkPositionSingleMessage arg2)
+        /// <summary>
+        /// Position from client to server
+        /// </summary>
+        /// <param name="arg1"></param>
+        /// <param name="arg2"></param>
+        private void ServerHandleNetworkPositionMessage(NetworkConnection conn, NetworkPositionSingleMessage msg)
         {
-            throw new NotImplementedException();
+
         }
 
 
         private void ClientHandleNetworkPositionMessage(NetworkConnection conn, NetworkPositionMessage msg)
         {
-            throw new NotImplementedException();
+            int count = msg.bytes.Count;
+            using (PooledNetworkReader reader = NetworkReaderPool.GetReader(msg.bytes))
+            {
+                int i = 0;
+                while (i < count)
+                {
+                    uint id = reader.ReadPackedUInt32();
+                    Vector3 position = compressPosition
+                        ? compression.Decompress(reader)
+                        : reader.ReadVector3();
+
+                    if (behaviours.TryGetValue(id, out IHasPosition behaviour))
+                    {
+                        behaviour.Position = position;
+                    }
+                }
+                Debug.Assert(i == count, "should have read exact amount");
+            }
         }
 
         private void OnDrawGizmos()
@@ -158,6 +186,9 @@ namespace Mirror.PositionSyncing
         /// Normally NetId, but could be a 
         /// </summary>
         uint Id { get; }
+
+        void SetPositionServer(Vector3 pos);
+        void SetPositionClient(Vector3 pos);
     }
     public struct NetworkPositionMessage : NetworkMessage
     {

@@ -3,8 +3,11 @@ using UnityEngine;
 
 namespace Mirror.PositionSyncing
 {
-    public class NetworkTransformBehaviour : NetworkBehaviour
+    public class NetworkTransformBehaviour : NetworkBehaviour, IHasPosition
     {
+        Vector3 IHasPosition.Position => target.position;
+        uint IHasPosition.Id => netId;
+
         public Transform target;
 
         private void OnValidate()
@@ -13,15 +16,29 @@ namespace Mirror.PositionSyncing
                 target = transform;
         }
 
-        private void OnEnable()
+        public override void OnStartClient()
         {
             NetworkTransformSystem.Instance.AddBehaviour(this);
         }
-        private void OnDisable()
+        public override void OnStartServer()
+        {
+            NetworkTransformSystem.Instance.AddBehaviour(this);
+        }
+
+        public override void OnStopClient()
+        {
+            NetworkTransformSystem.Instance.RemoveBehaviour(this);
+        }
+        public override void OnStopServer()
         {
             NetworkTransformSystem.Instance.RemoveBehaviour(this);
         }
 
+        private void OnDestroy()
+        {
+            // make sure is removed
+            NetworkTransformSystem.Instance.RemoveBehaviour(this);
+        }
 
         [Header("Authority")]
         [Tooltip("Set to true if moves come from owner client, set to false if moves always come from server")]
@@ -35,6 +52,7 @@ namespace Mirror.PositionSyncing
         // Is this a client with authority over this target?
         // This component could be on the player object or any object that has been assigned authority to this client.
         bool IsClientWithAuthority => hasAuthority && clientAuthority;
+
 
         // Sensitivity is added for VR where human players tend to have micro movements so this can quiet down
         // the network traffic.  Additionally, rigidbody drift should send less traffic, e.g very slow sliding / rolling.
