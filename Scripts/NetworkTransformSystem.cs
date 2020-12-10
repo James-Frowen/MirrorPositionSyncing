@@ -11,17 +11,18 @@ namespace Mirror.PositionSyncing
 
         //public int maxMessageSize = 1000;
 
-        readonly Dictionary<uint, IHasPosition> behaviours = new Dictionary<uint, IHasPosition>();
+        readonly Dictionary<uint, IHasPosition> _behaviours = new Dictionary<uint, IHasPosition>();
 
+        public IReadOnlyCollection<KeyValuePair<uint, IHasPosition>> Behaviours => _behaviours;
 
-        internal void AddBehaviour(IHasPosition behaviour)
+        public void AddBehaviour(IHasPosition behaviour)
         {
-            behaviours.Add(behaviour.Id, behaviour);
+            _behaviours.Add(behaviour.Id, behaviour);
         }
 
-        internal void RemoveBehaviour(IHasPosition behaviour)
+        public void RemoveBehaviour(IHasPosition behaviour)
         {
-            behaviours.Remove(behaviour.Id);
+            _behaviours.Remove(behaviour.Id);
         }
 
 
@@ -66,6 +67,7 @@ namespace Mirror.PositionSyncing
 
             compression = new PositionCompression(min, max, precision);
         }
+
         public void RegisterHandlers()
         {
             if (NetworkClient.active)
@@ -113,16 +115,23 @@ namespace Mirror.PositionSyncing
             }
         }
 
-        void SendUpdateToAll()
+        internal void SendUpdateToAll()
+        {
+            // dont send message if no behaviours
+            if (_behaviours.Count == 0) { return; }
+
+            NetworkPositionMessage msg = CreateSendToAllMessage();
+
+            NetworkServer.SendToAll(msg);
+        }
+
+        internal NetworkPositionMessage CreateSendToAllMessage()
         {
             NetworkPositionMessage msg;
 
-            // dont send message if no behaviours
-            if (behaviours.Count == 0) { return; }
-
             using (PooledNetworkWriter writer = NetworkWriterPool.GetWriter())
             {
-                foreach (KeyValuePair<uint, IHasPosition> kvp in behaviours)
+                foreach (KeyValuePair<uint, IHasPosition> kvp in _behaviours)
                 {
                     // todo add dirty check
                     uint id = kvp.Key;
@@ -146,7 +155,7 @@ namespace Mirror.PositionSyncing
                 };
             }
 
-            NetworkServer.SendToAll(msg);
+            return msg;
         }
 
 
@@ -156,19 +165,19 @@ namespace Mirror.PositionSyncing
         /// </summary>
         /// <param name="arg1"></param>
         /// <param name="arg2"></param>
-        private void ServerHandleNetworkPositionMessage(NetworkConnection conn, NetworkPositionSingleMessage msg)
+        internal void ServerHandleNetworkPositionMessage(NetworkConnection _conn, NetworkPositionSingleMessage msg)
         {
             uint id = msg.id;
             Vector3 position = msg.position;
 
-            if (behaviours.TryGetValue(id, out IHasPosition behaviour))
+            if (_behaviours.TryGetValue(id, out IHasPosition behaviour))
             {
                 behaviour.SetPositionServer(position);
             }
         }
 
 
-        private void ClientHandleNetworkPositionMessage(NetworkConnection conn, NetworkPositionMessage msg)
+        internal void ClientHandleNetworkPositionMessage(NetworkConnection _conn, NetworkPositionMessage msg)
         {
             int count = msg.bytes.Count;
             using (PooledNetworkReader reader = NetworkReaderPool.GetReader(msg.bytes))
@@ -180,7 +189,7 @@ namespace Mirror.PositionSyncing
                         ? compression.Decompress(reader)
                         : reader.ReadVector3();
 
-                    if (behaviours.TryGetValue(id, out IHasPosition behaviour))
+                    if (_behaviours.TryGetValue(id, out IHasPosition behaviour))
                     {
                         behaviour.SetPositionClient(position);
                     }
@@ -229,22 +238,22 @@ namespace Mirror.PositionSyncing
     }
     public static class PositionMessageWriter
     {
-        public static void WritePositionMessage(this NetworkWriter writer, NetworkPositionMessage msg)
-        {
-            int count = msg.bytes.Count;
-            writer.WriteUInt16((ushort)count);
-            writer.WriteBytes(msg.bytes.Array, msg.bytes.Offset, count);
-        }
-        public static NetworkPositionMessage ReadPositionMessage(this NetworkReader reader)
-        {
-            ushort count = reader.ReadUInt16();
-            ArraySegment<byte> bytes = reader.ReadBytesSegment(count);
+        //public static void WritePositionMessage(this NetworkWriter writer, NetworkPositionMessage msg)
+        //{
+        //    int count = msg.bytes.Count;
+        //    writer.WriteUInt16((ushort)count);
+        //    writer.WriteBytes(msg.bytes.Array, msg.bytes.Offset, count);
+        //}
+        //public static NetworkPositionMessage ReadPositionMessage(this NetworkReader reader)
+        //{
+        //    ushort count = reader.ReadUInt16();
+        //    ArraySegment<byte> bytes = reader.ReadBytesSegment(count);
 
-            return new NetworkPositionMessage
-            {
-                bytes = bytes
-            };
-        }
+        //    return new NetworkPositionMessage
+        //    {
+        //        bytes = bytes
+        //    };
+        //}
 
         public static void WriteNetworkPositionSingleMessage(this NetworkWriter writer, NetworkPositionSingleMessage msg)
         {
