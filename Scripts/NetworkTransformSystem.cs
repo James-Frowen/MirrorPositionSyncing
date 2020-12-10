@@ -103,6 +103,7 @@ namespace Mirror.PositionSyncing
 
         //}
 
+        [ServerCallback]
         private void LateUpdate()
         {
             float now = Time.time;
@@ -111,6 +112,7 @@ namespace Mirror.PositionSyncing
                 SendUpdateToAll();
             }
         }
+
         void SendUpdateToAll()
         {
             NetworkPositionMessage msg;
