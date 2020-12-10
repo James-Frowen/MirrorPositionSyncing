@@ -116,6 +116,10 @@ namespace Mirror.PositionSyncing
         void SendUpdateToAll()
         {
             NetworkPositionMessage msg;
+
+            // dont send message if no behaviours
+            if (behaviours.Count == 0) { return; }
+
             using (PooledNetworkWriter writer = NetworkWriterPool.GetWriter())
             {
                 foreach (KeyValuePair<uint, IHasPosition> kvp in behaviours)
