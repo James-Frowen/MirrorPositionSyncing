@@ -265,9 +265,6 @@ namespace Mirror.PositionSyncing
         }
         public static NetworkPositionSingleMessage ReadNetworkPositionSingleMessage(this NetworkReader reader)
         {
-            ushort count = reader.ReadUInt16();
-            ArraySegment<byte> bytes = reader.ReadBytesSegment(count);
-
             uint id = reader.ReadPackedUInt32();
             PositionCompression compression = NetworkTransformSystem.Instance.compression;
             Vector3 pos = compression.Decompress(reader);
