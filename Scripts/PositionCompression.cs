@@ -57,6 +57,8 @@ namespace Mirror.PositionSyncing
         readonly CompressFloat z;
         public readonly int bitCount;
 
+        public Vector3Int BitCountAxis => new Vector3Int(x.bitCount, y.bitCount, z.bitCount);
+
         public PositionCompression(Bounds bounds, float precision)
             : this(bounds.min, bounds.max, Vector3.one * precision) { }
         public PositionCompression(Bounds bounds, Vector3 precision)

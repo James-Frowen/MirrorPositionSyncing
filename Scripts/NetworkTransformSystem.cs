@@ -41,6 +41,7 @@ namespace Mirror.PositionSyncing
         [SerializeField] private Color gizmoColor;
         [Tooltip("readonly")]
         [SerializeField] private int _bitCount;
+        [SerializeField] private Vector3Int _bitCountAxis;
         [Tooltip("readonly")]
         [SerializeField] private int _byteCount;
 
@@ -54,6 +55,7 @@ namespace Mirror.PositionSyncing
         {
             compression = new PositionCompression(min, max, precision);
             _bitCount = compression.bitCount;
+            _bitCountAxis = compression.BitCountAxis;
             _byteCount = Mathf.CeilToInt(_bitCount / 8f);
         }
         private void Awake()
@@ -120,40 +122,40 @@ namespace Mirror.PositionSyncing
             // dont send message if no behaviours
             if (_behaviours.Count == 0) { return; }
 
-            NetworkPositionMessage msg = CreateSendToAllMessage();
+            using (PooledNetworkWriter writer = NetworkWriterPool.GetWriter())
+            {
+                NetworkPositionMessage msg = CreateSendToAllMessage(writer);
 
-            NetworkServer.SendToAll(msg);
+                NetworkServer.SendToAll(msg);
+            }
         }
 
-        internal NetworkPositionMessage CreateSendToAllMessage()
+        internal NetworkPositionMessage CreateSendToAllMessage(NetworkWriter writer)
         {
             NetworkPositionMessage msg;
 
-            using (PooledNetworkWriter writer = NetworkWriterPool.GetWriter())
+            foreach (KeyValuePair<uint, IHasPosition> kvp in _behaviours)
             {
-                foreach (KeyValuePair<uint, IHasPosition> kvp in _behaviours)
+                // todo add dirty check
+                uint id = kvp.Key;
+                Vector3 position = kvp.Value.Position;
+
+                writer.WritePackedUInt32(id);
+
+                if (compressPosition)
                 {
-                    // todo add dirty check
-                    uint id = kvp.Key;
-                    Vector3 position = kvp.Value.Position;
-
-                    writer.WritePackedUInt32(id);
-
-                    if (compressPosition)
-                    {
-                        compression.Compress(writer, position);
-                    }
-                    else
-                    {
-                        writer.WriteVector3(position);
-                    }
+                    compression.Compress(writer, position);
                 }
-
-                msg = new NetworkPositionMessage
+                else
                 {
-                    bytes = writer.ToArraySegment()
-                };
+                    writer.WriteVector3(position);
+                }
             }
+
+            msg = new NetworkPositionMessage
+            {
+                bytes = writer.ToArraySegment()
+            };
 
             return msg;
         }
