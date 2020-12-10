@@ -74,7 +74,8 @@ namespace Mirror.PositionSyncing
             const int maxBitCount = sizeof(ulong) * 8;
             if (bitCount > maxBitCount)
             {
-                throw new ArgumentException($"Compressing to sizes over {maxBitCount}");
+                // todo support this. check performance to see if it is event worth compressing over 64 bits
+                throw new NotSupportedException($"Compressing to sizes over {maxBitCount}");
             }
         }
 
