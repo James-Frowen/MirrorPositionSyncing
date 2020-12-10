@@ -173,8 +173,7 @@ namespace Mirror.PositionSyncing
             int count = msg.bytes.Count;
             using (PooledNetworkReader reader = NetworkReaderPool.GetReader(msg.bytes))
             {
-                int i = 0;
-                while (i < count)
+                while (reader.Position < count)
                 {
                     uint id = reader.ReadPackedUInt32();
                     Vector3 position = compressPosition
@@ -186,7 +185,7 @@ namespace Mirror.PositionSyncing
                         behaviour.SetPositionClient(position);
                     }
                 }
-                Debug.Assert(i == count, "should have read exact amount");
+                Debug.Assert(reader.Position == count, "should have read exact amount");
             }
         }
 
