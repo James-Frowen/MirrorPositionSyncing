@@ -35,8 +35,8 @@ namespace Mirror.PositionSyncing
                 minUint = 0u;
                 maxUint = (1u << bitCount) - 1u;
 
-                readMask = ~(maxUint + 1u);
-                readMaskLong = ~(maxUint + 1ul);
+                readMask = maxUint;
+                readMaskLong = maxUint;
             }
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -103,8 +103,7 @@ namespace Mirror.PositionSyncing
             }
             else
             {
-                ulong s = a | b << x.bitCount | c << (x.bitCount + y.bitCount);
-
+                ulong s = a | ((ulong)b) << x.bitCount | ((ulong)c) << (x.bitCount + y.bitCount);
                 if (bitCount <= 40)
                 {
                     writer.WriteUInt32((uint)s);
@@ -112,8 +111,10 @@ namespace Mirror.PositionSyncing
                 }
                 else if (bitCount <= 48)
                 {
-                    writer.WriteUInt32((uint)s);
-                    writer.WriteUInt16((ushort)(s >> 32));
+                    ulong s1 = s;
+                    ulong s2 = s >> 32;
+                    writer.WriteUInt32((uint)s1);
+                    writer.WriteUInt16((ushort)s2);
                 }
                 else if (bitCount <= 56)
                 {
@@ -161,19 +162,21 @@ namespace Mirror.PositionSyncing
             {
                 ulong s;
 
-                ulong s1 = reader.ReadUInt32();
                 if (bitCount <= 40)
                 {
+                    ulong s1 = reader.ReadUInt32();
                     ulong s2 = reader.ReadByte();
                     s = s1 | s2 << 32;
                 }
                 else if (bitCount <= 48)
                 {
+                    ulong s1 = reader.ReadUInt32();
                     ulong s2 = reader.ReadUInt16();
                     s = s1 | s2 << 32;
                 }
                 else if (bitCount <= 56)
                 {
+                    ulong s1 = reader.ReadUInt32();
                     ulong s2 = reader.ReadUInt16();
                     ulong s3 = reader.ReadByte();
                     s = s1 | s2 << 32 | s3 << 48;
@@ -184,8 +187,8 @@ namespace Mirror.PositionSyncing
                 }
 
                 a = (uint)(x.readMaskLong & s);
-                b = (uint)(y.readMaskLong & s >> x.bitCount);
-                c = (uint)(z.readMaskLong & s >> (x.bitCount + y.bitCount));
+                b = (uint)(y.readMaskLong & (s >> x.bitCount));
+                c = (uint)(z.readMaskLong & (s >> (x.bitCount + y.bitCount)));
             }
 
             return new Vector3(
