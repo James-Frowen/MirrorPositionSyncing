@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 namespace Mirror.PositionSyncing
@@ -27,7 +28,10 @@ namespace Mirror.PositionSyncing
 
 
         [Header("Sync")]
+        [Tooltip("How often 1 behaviour should update")]
         public float syncInterval = 0.1f;
+        [Tooltip("Check if behaviours need update every frame, If false then checks every syncInterval")]
+        public bool checkEveryFrame = false;
 
         [Header("Position Compression")]
         [SerializeField] bool compressPosition = true;
@@ -108,12 +112,26 @@ namespace Mirror.PositionSyncing
         //}
 
         [ServerCallback]
-        private void LateUpdate()
+        private void Update()
+        {
+            if (checkEveryFrame || ShouldSync())
+            {
+                SendUpdateToAll();
+            }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        bool ShouldSync()
         {
             float now = Time.time;
             if (now > nextSyncInterval)
             {
-                SendUpdateToAll();
+                nextSyncInterval += syncInterval;
+                return true;
+            }
+            else
+            {
+                return false;
             }
         }
 
@@ -126,6 +144,9 @@ namespace Mirror.PositionSyncing
             {
                 NetworkPositionMessage msg = CreateSendToAllMessage(writer);
 
+                // dont send if none were dirty
+                if (msg.bytes.Count == 0) { return; }
+
                 NetworkServer.SendToAll(msg);
             }
         }
@@ -133,12 +154,17 @@ namespace Mirror.PositionSyncing
         internal NetworkPositionMessage CreateSendToAllMessage(NetworkWriter writer)
         {
             NetworkPositionMessage msg;
+            float now = Time.time;
+
 
             foreach (KeyValuePair<uint, IHasPosition> kvp in _behaviours)
             {
-                // todo add dirty check
+                IHasPosition behaviour = kvp.Value;
+                if (!behaviour.NeedsUpdate(now))
+                    continue;
+
                 uint id = kvp.Key;
-                Vector3 position = kvp.Value.Position;
+                Vector3 position = behaviour.Position;
 
                 writer.WritePackedUInt32(id);
 
@@ -226,8 +252,11 @@ namespace Mirror.PositionSyncing
         /// </summary>
         uint Id { get; }
 
-        void SetPositionServer(Vector3 pos);
-        void SetPositionClient(Vector3 pos);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        bool NeedsUpdate(float now);
+
+        void SetPositionServer(Vector3 position);
+        void SetPositionClient(Vector3 position);
     }
     public struct NetworkPositionMessage : NetworkMessage
     {

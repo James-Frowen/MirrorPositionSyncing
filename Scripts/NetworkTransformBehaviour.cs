@@ -8,8 +8,33 @@ namespace Mirror.PositionSyncing
         Vector3 IHasPosition.Position => target.position;
         uint IHasPosition.Id => netId;
 
-        void IHasPosition.SetPositionClient(Vector3 position) => DeserializeFromReader(position);
-        void IHasPosition.SetPositionServer(Vector3 position) => target.localPosition = position;
+        bool _needsUpdate;
+        float _nextSyncInterval;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public bool NeedsUpdate(float now)
+        {
+            if (_needsUpdate && now > _nextSyncInterval)
+            {
+                _nextSyncInterval = now + syncInterval;
+                _needsUpdate = false;
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        void IHasPosition.SetPositionClient(Vector3 position)
+        {
+            if (!IsClientWithAuthority) { DeserializeFromReader(position); }
+        }
+
+        void IHasPosition.SetPositionServer(Vector3 position)
+        {
+            target.localPosition = position;
+            _needsUpdate = true;
+        }
 
         public Transform target;
 
@@ -130,20 +155,27 @@ namespace Mirror.PositionSyncing
         // serialization is needed by OnSerialize and by manual sending from authority
         void DeserializeFromReader(Vector3 localPosition)
         {
-            float timeStamp = Time.time;
+            DataPoint _oldStart = start;
+            DataPoint _oldGoal = goal;
+
+            float now = Time.time;
             // movement speed: based on how far it moved since last time
             // has to be calculated before 'start' is overwritten
-            float movementSpeed = EstimateMovementSpeed(goal, timeStamp, localPosition);
+            float movementSpeed = EstimateMovementSpeed(goal, now, localPosition);
 
             // put it into a data point immediately
-            DataPoint temp = new DataPoint(timeStamp, localPosition, movementSpeed);
+            DataPoint newGoal = new DataPoint(now, localPosition, movementSpeed);
 
             // reassign start wisely
             // -> first ever data point? then make something up for previous one
             //    so that we can start interpolation without waiting for next.
             if (!start.isValid)
             {
-                start = new DataPoint(timeStamp - syncInterval, target.localPosition, temp.movementSpeed);
+                Debug.Log($"Start Time {now - syncInterval}");
+                start = new DataPoint(
+                    now - syncInterval,
+                    target.localPosition,
+                    newGoal.movementSpeed);
             }
             // -> second or nth data point? then update previous, but:
             //    we start at where ever we are right now, so that it's
@@ -177,7 +209,7 @@ namespace Mirror.PositionSyncing
             else
             {
                 float oldDistance = Vector3.Distance(start.localPosition, goal.localPosition);
-                float newDistance = Vector3.Distance(goal.localPosition, temp.localPosition);
+                float newDistance = Vector3.Distance(goal.localPosition, newGoal.localPosition);
 
                 // teleport / lag / obstacle detection: only continue at current
                 // position if we aren't too far away
@@ -185,11 +217,14 @@ namespace Mirror.PositionSyncing
                     ? target.localPosition
                     : goal.localPosition;
 
-                start = new DataPoint(goal.timeStamp, startPos, goal.movementSpeed);
+                start = new DataPoint(
+                    goal.timeStamp,
+                    startPos,
+                    goal.movementSpeed);
             }
 
             // set new destination in any case. new data is best data.
-            goal = temp;
+            goal = newGoal;
         }
 
         static Vector3 InterpolatePosition(DataPoint start, DataPoint goal, Vector3 currentPosition)
@@ -224,7 +259,11 @@ namespace Mirror.PositionSyncing
             float goalTime = goal.isValid ? goal.timeStamp : Time.time;
             float difference = goalTime - startTime;
             float timeSinceGoalReceived = Time.time - goalTime;
-            return timeSinceGoalReceived > difference * 5;
+            bool need = timeSinceGoalReceived > difference * 5;
+
+            if (need)
+                Debug.LogWarning($"Needs Teleport start{startTime} goal{goalTime}");
+            return need;
         }
 
         /// <summary>
@@ -297,6 +336,7 @@ namespace Mirror.PositionSyncing
                     // teleport or interpolate
                     if (NeedsTeleport())
                     {
+
                         // local position/rotation for VR support
                         ApplyPosition(goal.localPosition);
 

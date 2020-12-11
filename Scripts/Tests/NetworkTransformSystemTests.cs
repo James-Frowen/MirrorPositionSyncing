@@ -28,6 +28,7 @@ namespace Mirror.PositionSyncing.Tests
             IHasPosition hasPos = Substitute.For<IHasPosition>();
             hasPos.Position.Returns(inValue);
             hasPos.Id.Returns(1u);
+            hasPos.NeedsUpdate(Arg.Any<float>()).Returns(true);
 
             system.AddBehaviour(hasPos);
 
@@ -59,6 +60,8 @@ namespace Mirror.PositionSyncing.Tests
                 IHasPosition hasPos = Substitute.For<IHasPosition>();
                 hasPos.Position.Returns(inValue);
                 hasPos.Id.Returns((uint)(i + 1));
+                hasPos.NeedsUpdate(Arg.Any<float>()).Returns(true);
+
                 hasPoss.Add(hasPos);
                 system.AddBehaviour(hasPos);
             }
