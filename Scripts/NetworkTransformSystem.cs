@@ -7,10 +7,11 @@ namespace Mirror.PositionSyncing
 {
     public class NetworkTransformSystem : MonoBehaviour
     {
-        // todo replace singleton with scriptable object
-        public static NetworkTransformSystem Instance { get; private set; }
+        // todo make this work with network Visibility
+        // todo replace singleton with scriptable object (find a way to read without needing static)
+        // todo add maxMessageSize (splits up update message into multiple messages if too big)
 
-        //public int maxMessageSize = 1000;
+        public static NetworkTransformSystem Instance { get; private set; }
 
         readonly Dictionary<uint, IHasPosition> _behaviours = new Dictionary<uint, IHasPosition>();
 
@@ -49,6 +50,7 @@ namespace Mirror.PositionSyncing
         [Tooltip("readonly")]
         [SerializeField] private int _byteCount;
 
+        // this needs to be public for reader
         [NonSerialized]
         public PositionCompression compression;
 
@@ -100,19 +102,8 @@ namespace Mirror.PositionSyncing
             }
         }
 
-        //public class VisibleGroup
-        //{
-        //    public List<NetworkConnection> connections;
-        //    public IHasPosition hasPosition;
-        //}
-
-        //void SendUpdate(VisibleGroup group)
-        //{
-
-        //}
-
         [ServerCallback]
-        private void Update()
+        private void LateUpdate()
         {
             if (checkEveryFrame || ShouldSync())
             {
