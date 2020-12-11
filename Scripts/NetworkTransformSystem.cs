@@ -31,7 +31,7 @@ namespace Mirror.PositionSyncing
         [Tooltip("How often 1 behaviour should update")]
         public float syncInterval = 0.1f;
         [Tooltip("Check if behaviours need update every frame, If false then checks every syncInterval")]
-        public bool checkEveryFrame = false;
+        public bool checkEveryFrame = true;
 
         [Header("Position Compression")]
         [SerializeField] bool compressPosition = true;
