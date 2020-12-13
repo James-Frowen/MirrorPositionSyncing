@@ -223,8 +223,8 @@ namespace Mirror.PositionSyncing
             if (!drawGizmo) { return; }
             Gizmos.color = gizmoColor;
             Bounds bounds = default;
-            bounds.min = new Vector3(0, -20, 0);
-            bounds.max = new Vector3(500, 40, 500);
+            bounds.min = min;
+            bounds.max = max;
             Gizmos.DrawWireCube(bounds.center, bounds.size);
         }
 #endif
