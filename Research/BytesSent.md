@@ -40,8 +40,8 @@ sends 5A-42-...                   -9A-C1-05-43-A0-91-9A-41-7F-B0-23-43 ... rotat
 Header breakdown
 ---
 MessageHash             5A-42
-NetId(packed)           4 bytes
-PayloadLength(packed)   4 bytes
+NetId                   4 bytes
+PayloadLength           4 bytes
 CompIndex               01
 LengthWritten           0C-00-00-00
 
