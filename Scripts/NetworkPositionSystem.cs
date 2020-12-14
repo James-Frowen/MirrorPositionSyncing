@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace Mirror.PositionSyncing
 {
-    public class NetworkTransformSystem : MonoBehaviour
+    public class NetworkPositionSystem : MonoBehaviour
     {
         // todo make this work with network Visibility
         // todo replace singleton with scriptable object (find a way to read without needing static)
