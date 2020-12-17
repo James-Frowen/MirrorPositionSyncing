@@ -33,5 +33,7 @@ Indexing seems like it would be better fit more use cases for mirror.
 
 It might be worth sending an netid offset at the start of the message so that id can be better packed. This would be good for servers that run for a long time as the netid is not reset.
 
+The crossover point when Indexing is better depends on how many bits per id and if we are packing the bools.
+
 
 
