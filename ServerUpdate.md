@@ -32,3 +32,5 @@ For every object we take a writer out of the pool before we even know if it is d
 This can be come a problem when you want passive Network objects in the scene that only open when the player interacts with them. 
 
 For example a object (wall/tree/etc) that has health and can be destroyed, but does nothing without the players actions. Currently the work around for this situation is to avoid making the passive objects Network objects. This feels like it is telling people not to use mirror's features to solve a problem because it is not well optimized.
+
+If someone has a game that can run single player and multiplayer mirror they have to code the game to work while mirror is running or not, Or suffer the performance cost of mirror looping through all network objects.
