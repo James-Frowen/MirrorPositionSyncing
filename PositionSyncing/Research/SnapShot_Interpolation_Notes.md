@@ -3,7 +3,17 @@
 Notes and summary about https://gafferongames.com/post/snapshot_interpolation/ and how it can be applied it [Mirror](https://github.com/vis2k/Mirror)
 
 
-### deterministic lockstep vs Snapshot Interpolation
+# Summary
+
+- Interpolate between positions
+- Include Linear velocity with snapshot if objects have acceleration
+- Use UDP 
+- 10 hz with 350ms latency (250kb/s)
+- 60 hz with 85ms latency (1.5mb/s)
+- Extrapolation is hard, fails with collisions
+
+
+## deterministic lockstep vs Snapshot Interpolation
 
 Deterministic lockstep sends inputs between instances and each simulates the game locally. This is ok for low player count, but requires all inputs before it can fully simulate frame N. 
 
@@ -12,9 +22,9 @@ Snapshot collects relevant state (eg position/rotation) then sends this state to
 Snapshot takes up a lot more bandwidth, but can scale to more players.
 
 
-## Snapshot Concepts 
+# Snapshot Concepts 
 
-#### Object State
+### Object State
 
 Send all objects in order with
 ```
@@ -42,7 +52,7 @@ For this snapshot it is 225 bits/object. For 900 objects this is 25 kilobytes. S
 
 This is not viable for most internet connections!
 
-#### Linear Interpolation
+### Linear Interpolation
 
 Client interpolates between snapshots. Can send at 10 hz because the client can smoothly move between them.
 
@@ -52,7 +62,7 @@ Linear interpolation will look bad when objects are speed increase and decreases
 
 sending at higher HZ helps with this, but at the cost of bandwidth
 
-#### Hermite Interpolation
+### Hermite Interpolation
 
 Interpolates between positions while considering linear velocity at each sample point. 
 
@@ -61,7 +71,7 @@ Using hermite splines. Passing start/end points with start/end velocity.
 Increases bandwidth because velocity is being sent, but data can still be sent at 10hz.
 
 
-#### Quaternions Interpolation
+### Quaternions Interpolation
 
 higher order (velocity) is not needed for rotation.
 
@@ -69,7 +79,7 @@ Use spherical linear interpolation.
 
 
 
-#### Handing Real world Conditions
+### Handing Real world Conditions
 
 Send snapshot over UDP.
 
@@ -85,24 +95,11 @@ One technique to hide delay from buffer is to use extrapolation. (Common in Fps/
 Extrapolation doesn't work well for rigidbodies because of motion can be unpredictable (eg velocity can change rapidly). it doesn't work well because the Extrapolation doesn't know about the physics simulations or collisions.
 
 
-#### Conclusion
+### Conclusion
 
 350ms seems like a high delay, we can decrease that delay by increasing syncrate. but in order to do that we'd have to decrease bandwidth
 
 60hz = 85ms
-
-## Summary
-
-- Interpolate between positions
-- Include Linear velocity with snapshot if objects have acceleration
-- Use UDP 
-- 10 hz with 350ms latency (250kb/s)
-- 60 hz with 85ms latency (1.5mb/s)
-- Extrapolation is hard, fails with collisions
-
-
-
-
 
 
 
