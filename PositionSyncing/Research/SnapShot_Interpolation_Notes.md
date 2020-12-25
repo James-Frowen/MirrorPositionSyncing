@@ -1,8 +1,3 @@
-# SnapShot Interpolation
-
-Notes and summary about https://gafferongames.com/post/snapshot_interpolation/ and how it can be applied it [Mirror](https://github.com/vis2k/Mirror)
-
-
 # Summary
 
 - Interpolate between positions
@@ -11,6 +6,11 @@ Notes and summary about https://gafferongames.com/post/snapshot_interpolation/ a
 - 10 hz with 350ms latency (250kb/s)
 - 60 hz with 85ms latency (1.5mb/s)
 - Extrapolation is hard, fails with collisions
+
+
+# SnapShot Interpolation
+
+Notes and summary about https://gafferongames.com/post/snapshot_interpolation/ and how it can be applied it [Mirror](https://github.com/vis2k/Mirror)
 
 
 ## deterministic lockstep vs Snapshot Interpolation
