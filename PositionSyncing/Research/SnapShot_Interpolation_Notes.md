@@ -6,6 +6,7 @@
 - 10 hz with 350ms latency (250kb/s)
 - 60 hz with 85ms latency (1.5mb/s)
 - Extrapolation is hard, fails with collisions
+- Use Compression to reduce bandwidth
 
 
 # SnapShot Interpolation
@@ -101,7 +102,6 @@ Extrapolation doesn't work well for rigidbodies because of motion can be unpredi
 
 60hz = 85ms
 
-
-
+with higher hz you need to use compression to bring the bandwidth back down to acceptable levels.
 
 
