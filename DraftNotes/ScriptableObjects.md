@@ -12,3 +12,5 @@ This could achieved by assigning a fixed id like scene Id.
 
 With greater support Synclists and dictionaries could be made into scriptableobjects instead of being forced to be inside of a MonoBehaviour.
 
+
+https://www.youtube.com/watch?v=WLDgtRNK2VE
