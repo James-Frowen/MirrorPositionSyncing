@@ -34,3 +34,24 @@ This can be come a problem when you want passive Network objects in the scene th
 For example a object (wall/tree/etc) that has health and can be destroyed, but does nothing without the players actions. Currently the work around for this situation is to avoid making the passive objects Network objects. This feels like it is telling people not to use mirror's features to solve a problem because it is not well optimized.
 
 If someone has a game that can run single player and multiplayer mirror they have to code the game to work while mirror is running or not, Or suffer the performance cost of mirror looping through all network objects.
+
+
+# Improvements 
+
+## Batching sent message
+
+```
+foreach object
+    create syncvar message
+
+foreach connection
+    start groupMessage
+    foreach visible object
+        add syncvar to groupMessage
+    end groupMessage
+    Send groupMessage
+```
+
+![graph of updatetime](https://cdn.discordapp.com/attachments/586459454187503626/792571356125331497/unknown.png)
+
+Code: https://github.com/James-Frowen/Mirror/tree/alt-syncvar-sending
