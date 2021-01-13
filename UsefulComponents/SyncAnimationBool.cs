@@ -38,6 +38,9 @@ namespace JamesFrowen.Mirror.UsefulComponents
         [Server]
         public void SetValue(bool newValue)
         {
+            // do nothing if null
+            if (this.target == null || this.target.runtimeAnimatorController == null) { return; }
+
             this.value = newValue;
             this.target.SetBool(this.parameterHash, newValue);
         }
