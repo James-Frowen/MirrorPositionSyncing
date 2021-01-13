@@ -10,6 +10,9 @@ namespace JamesFrowen.Mirror.UsefulComponents
 
         int parameterHash;
 
+        [SyncVar(hook = nameof(OnChange))]
+        [SerializeField] bool value;
+
         private void OnValidate()
         {
             if (this.target == null)
@@ -26,9 +29,6 @@ namespace JamesFrowen.Mirror.UsefulComponents
         {
             this.parameterHash = Animator.StringToHash(this.parameterName);
         }
-
-        [SyncVar(hook = nameof(OnChange))]
-        bool value;
 
         void OnChange(bool _oldValue, bool newValue)
         {
