@@ -66,10 +66,10 @@ ids = [10, 3, 7, 1]
 
 if different could be large then you can send a bit to say if the id is absolute or relative to previous.
 
-This can be combine with [Solution 1](##Solution-1)
+This can be combine with [Solution 1](#solution-1-variable-size-bit-packing)
 
 
-# Solution 3: Send Id relative to known offset on client
+## Solution 3: Send Id relative to known offset on client
 
 Server would keep track of id offset for client
 
