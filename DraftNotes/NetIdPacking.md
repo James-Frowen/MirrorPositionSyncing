@@ -40,8 +40,6 @@ else if id <  536mil
 
 ranges can be stacks, so 2nd smallest can be 64->2112.
 
-encoding can be changed based on use case/data to minimize bandwidth
-
 bit count for id values:
 ```
 [0...64] 7 bits
@@ -49,6 +47,8 @@ bit count for id values:
 [2k...67k] 19 bits
 [67k...536mil] 32 bits
 ```
+
+encoding can be changed based on use case/data to minimize bandwidth
 
 ## Solution 2: Send id compared to previous id
 
