@@ -22,6 +22,7 @@ function CreateClientVps() {
 
   if ($RUN_CLOUD) then
     gcloud compute instances create $VPS_NAME \
+      --project $CLOUD_PROJECT \
       --zone $REGION \
       --machine-type $MACHINE_TYPE \
       --metadata-from-file startup-script=$STARTUP_FILE
@@ -36,6 +37,7 @@ function CreateServerVps() {
 
   if ($RUN_CLOUD) then
     gcloud compute instances create $SERVER_NAME \
+      --project $CLOUD_PROJECT \
       --tags $SERVER_NETWORK_TAG \
       --zone $REGION \
       --machine-type $MACHINE_TYPE \
@@ -52,17 +54,15 @@ function CreateStartupScript() {
   cat > $STARTUP_FILE <<-EOM
 #! /bin/bash
 
-# setup vps
 apt-get update
 apt-get install -y screen unzip
 
-# download server
 gsutil cp gs://$BUCKET_NAME/$BUILD_NAME.zip $BUILD_NAME.zip
 unzip $BUILD_NAME.zip
 
 cd $BUILD_NAME
 chmod +x ./$FILE_NAME 
-
+sleep 60
 EOM
 
 case $TYPE in
@@ -75,8 +75,9 @@ EOM
 
 "client" )
 cat >> $STARTUP_FILE <<-EOM
-for i in {1..10}; do 
-  screen -d -m -S "mirrorClient$i" ./$FILE_NAME -logfile ~/client$i.log $CLIENT_START_ARGS -address $SERVER_IP
+for i in {1..7}; do 
+  screen -d -m -S "mirrorClient\$i" ./$FILE_NAME -logfile ~/client\$i.log $CLIENT_START_ARGS -address $SERVER_IP
+  sleep 10
 done
 EOM
   ;;
@@ -88,7 +89,7 @@ esac
 }
 
 function GetServerIp() {
-  echo "$(gcloud compute instances describe $SERVER_NAME --zone=$SERVER_REGION --format='get(networkInterfaces[0].accessConfigs.natIP)')"
+  echo "$(gcloud compute instances describe $SERVER_NAME --project $CLOUD_PROJECT --zone=$SERVER_REGION --format='get(networkInterfaces[0].accessConfigs.natIP)')"
 }
 
 ####################################################################################
@@ -97,11 +98,12 @@ function GetServerIp() {
 readonly STARTUP_FILE="./_startup.sh"
 
 # bucket settings
+readonly CLOUD_PROJECT="mirror-benchmarking"
 readonly BUCKET_NAME="mirror-builds"
-readonly FILE_NAME="mirror_server.x86_64"
 
 # vps settings
-readonly MACHINE_TYPE="e2-micro"
+# readonly MACHINE_TYPE="e2-micro"
+readonly MACHINE_TYPE="e2-small"
 readonly SERVER_NETWORK_TAG="mirror-tcp1"
 
 # vps names
@@ -115,6 +117,7 @@ EXTERNAL_IP="localhost"
 # Run Settings
 
 
+readonly FILE_NAME="mirror.x86_64"
 readonly BUILD="SyncPosition_server_linux"
 readonly SERVER_START_ARGS="-server"
 readonly CLIENT_START_ARGS="-client"
@@ -138,10 +141,10 @@ readonly CLIENT_REGIONS=(
 ####################################################################################
 # Run program
 
-readonly RUN_CLOUD=false
-
+readonly RUN_CLOUD=true
 
 # CreateServerVps $BUILD $SERVER_REGION
+EXTERNAL_IP=$(GetServerIp)
 
-# EXTERNAL_IP=$(GetServerIp)
 CreateManyClientVps $BUILD ${CLIENT_REGIONS[0]} $EXTERNAL_IP 1 7
+
